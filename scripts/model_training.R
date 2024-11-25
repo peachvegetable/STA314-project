@@ -36,7 +36,7 @@ with(torch$no_grad(), {  # Disable gradient computation for speed
 })
 
 # Extract training CLS token embeddings (sentence-level embeddings)
-train_embeddings <- train_outputs$last_hidden_state[, 1, ]
+train_embeddings <- train_outputs$last_hidden_state[, 0, ]
 train_embeddings_matrix <- as.matrix(train_embeddings$detach()$numpy())
 saveRDS(train_embeddings_matrix, "train_embeddings.rds")
 
@@ -57,7 +57,7 @@ with(torch$no_grad(), {  # Disable gradient computation for speed
 })
 
 # Extract testing CLS token embeddings (sentence-level embeddings)
-test_embeddings <- test_outputs$last_hidden_state[, 1, ]
+test_embeddings <- test_outputs$last_hidden_state[, 0, ]
 test_embeddings_matrix <- as.matrix(test_embeddings$detach()$numpy())
 saveRDS(test_embeddings_matrix, "test_embeddings.rds")
 
