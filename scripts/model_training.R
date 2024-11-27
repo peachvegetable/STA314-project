@@ -1,3 +1,4 @@
+Sys.setenv(TOKENIZERS_PARALLELISM = "false")
 library(reticulate)
 # Use the Conda environment
 use_condaenv("r", required = TRUE)
