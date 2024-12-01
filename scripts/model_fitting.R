@@ -10,7 +10,7 @@ comment_embedding <- readRDS("data/embeddings/train_content_embeddings.rds")
 video_embedding <- readRDS("data/embeddings/train_video_embeddings.rds")
 
 train_df <- train |>
-  select(comment_id, date_missing, year, month, day, hour, minute, 
+  select(date_missing, year, month, day, hour, minute, 
          second, weekday, week, quarter, day_of_year, week_of_year, weekend, 
          hour_sin, hour_cos, weekday_num, weekday_sin, weekday_cos, month_sin, 
          month_cos, author_freq, has_url, class)
@@ -52,7 +52,8 @@ train_control <- trainControl(
   number = 10, 
   classProbs = TRUE,
   summaryFunction = f1Summary,
-  savePredictions = "final" 
+  savePredictions = "final",
+  sampling = "smote"
 )
 
 # Train Logistic Regression with cross-validation
@@ -74,6 +75,10 @@ rf_grid <- expand.grid(
   mtry = c(2, 5, 10)
 )
 
+rf_grid_expanded <- expand.grid(
+  mtry = seq(2, ncol(train_df) - 1, by = 1)
+)
+
 # Train Random Forest with cross-validation
 set.seed(123)
 rf_model <- train(
@@ -82,12 +87,11 @@ rf_model <- train(
   method = "rf",
   trControl = train_control,
   metric = "F1",
-  tuneGrid = rf_grid                         
+  tuneGrid = rf_grid,
+  ntree = 1000
 )
 
-# View model details
 print(rf_model)
-
 saveRDS(rf_model, "models/rf.rds")
 
 # Define a tuning grid for Lasso (alpha = 1)
