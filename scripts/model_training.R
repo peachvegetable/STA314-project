@@ -9,22 +9,22 @@ library(dplyr)
 transformers <- import("transformers")
 torch <- import("torch")
 
-train_path <- "data/train.csv"
-test_path <- "data/test.csv"
+train_path <- "data/processed_data/processed_train.csv"
+test_path <- "data/raw_data/test.csv"
 train <- read.csv(train_path)
 test <- read.csv(test_path)
 
-train_content <- train$CONTENT
-test_content <- test$CONTENT
-train_label <- train$CLASS
-test_label <- test$CLASS
+train_content <- train$content
+test_content <- test$content
+train_label <- train$class
+test_label <- test$class
 
 # Load the tokenizer and model
 tokenizer <- transformers$AutoTokenizer$from_pretrained("bert-base-uncased")
 model <- transformers$AutoModel$from_pretrained("bert-base-uncased")
 
 # Tokenize the training content
-train_inputs <- tokenizer(
+train_content_inputs <- tokenizer(
   train_content,
   return_tensors = "pt",  # Return PyTorch tensors
   padding = TRUE,         # Pad all sentences to the same length
@@ -33,16 +33,39 @@ train_inputs <- tokenizer(
 
 # Embedding train_inputs
 with(torch$no_grad(), {  # Disable gradient computation for speed
-  train_outputs <- model$forward(train_inputs$input_ids, attention_mask = train_inputs$attention_mask)
+  train_content_outputs <- model$forward(train_content_inputs$input_ids, attention_mask = train_content_inputs$attention_mask)
 })
 
 # Extract training CLS token embeddings (sentence-level embeddings)
-train_embeddings <- train_outputs$last_hidden_state[, 0, ]
-train_embeddings_matrix <- as.matrix(train_embeddings$detach()$numpy())
-saveRDS(train_embeddings_matrix, "train_embeddings.rds")
+train_content_embeddings <- train_content_outputs$last_hidden_state[, 0, ]
+train_content_embeddings_matrix <- as.matrix(train_content_embeddings$detach()$numpy())
+saveRDS(train_content_embeddings_matrix, "train_content_embeddings.rds")
 
 # Convert to a data frame for easier handling
 train_df <- as.data.frame(train_embeddings_matrix)
+
+video_name <- train$video_name
+
+train_video_inputs <- tokenizer(
+  video_name,
+  return_tensors = "pt",  # Return PyTorch tensors
+  padding = TRUE,         # Pad all sentences to the same length
+  truncation = TRUE       # Truncate sentences longer than BERT's max length
+)
+
+# Embedding train_inputs
+with(torch$no_grad(), {  # Disable gradient computation for speed
+  train_video_outputs <- model$forward(train_video_inputs$input_ids, attention_mask = train_video_inputs$attention_mask)
+})
+
+# Extract training CLS token embeddings (sentence-level embeddings)
+train_video_embeddings <- train_video_outputs$last_hidden_state[, 0, ]
+train_video_embeddings_matrix <- as.matrix(train_video_embeddings$detach()$numpy())
+saveRDS(train_video_embeddings_matrix, "train_video_embeddings.rds")
+
+
+
+
 
 # Tokenize the testing content
 test_inputs <- tokenizer(
