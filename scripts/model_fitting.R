@@ -52,8 +52,7 @@ train_control <- trainControl(
   number = 10, 
   classProbs = TRUE,
   summaryFunction = f1Summary,
-  savePredictions = "final",
-  sampling = "smote"
+  savePredictions = "final"
 )
 
 # Train Logistic Regression with cross-validation
