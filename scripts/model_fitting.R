@@ -6,20 +6,20 @@ library(pROC)
 path <- "data/processed_data/processed_train.csv"
 train <- read.csv(path)
 
-comment_embedding <- readRDS("data/embeddings/train_content_embeddings.rds")
-video_embedding <- readRDS("data/embeddings/train_video_embeddings.rds")
+comment_embedding <- readRDS("train_content_mean_embeddings.rds")
 
-train_df <- train |>
-  select(date_missing, year, month, day, hour, minute, 
-         second, weekday, week, quarter, day_of_year, week_of_year, weekend, 
-         hour_sin, hour_cos, weekday_num, weekday_sin, weekday_cos, month_sin, 
-         month_cos, author_freq, has_url, class)
+#pca_result <- prcomp(comment_embedding, center = TRUE, scale. = TRUE)
+# Determine how many PCs to keep
+#variance_explained <- summary(pca_result)$importance[2, ]
+# Choose the number of PCs that explain 90% of variance
+#n_pcs <- which(cumsum(variance_explained) >= 0.99)[1]
+# Extract those principal components
+#reduced_embeddings <- pca_result$x[, 1:n_pcs]
 
-train_df$comment <- comment_embedding
-train_df$video_name <- video_embedding
+train$content <- comment_embedding
 
 # Convert 'class' to a factor with prefixed labels to make them valid R variable names
-train_df$class <- factor(train_df$class, levels = c(0, 1), labels = c("C0", "C1"))
+train$class <- factor(train$class, levels = c(0, 1), labels = c("C0", "C1"))
 
 # Define custom summary function for F1-score
 f1Summary <- function(data, lev = NULL, model = NULL) {
@@ -55,89 +55,22 @@ train_control <- trainControl(
   savePredictions = "final"
 )
 
-# Train Logistic Regression with cross-validation
-logistic_model <- train(
-  class ~ ., 
-  data = train_df,
-  method = "glm",
-  family = "binomial",
-  trControl = train_control,
-  metric = "F1"
-)
-
-# View model summary
-print(logistic_model)
-saveRDS(logistic_model, "models/logistic.rds")
-
 # Define a reasonable mtry grid based on the number of predictors
-rf_grid <- expand.grid(
-  mtry = c(2, 5, 10)
-)
-
 rf_grid_expanded <- expand.grid(
-  mtry = seq(2, ncol(train_df) - 1, by = 1)
+  mtry = seq(2, ncol(train) - 1, by = 1)
 )
 
 # Train Random Forest with cross-validation
 set.seed(123)
 rf_model <- train(
   class ~ .,
-  data = train_df,
+  data = train,
   method = "rf",
   trControl = train_control,
   metric = "F1",
-  tuneGrid = rf_grid,
+  tuneGrid = rf_grid_expanded,
   ntree = 1000
 )
 
 print(rf_model)
-saveRDS(rf_model, "models/rf.rds")
-
-# Define a tuning grid for Lasso (alpha = 1)
-tune_grid_lasso <- expand.grid(
-  alpha = 1,  # Lasso
-  lambda = 10^seq(-4, 1, length = 100)  # Range of lambda values
-)
-
-# Define a tuning grid for Ridge (alpha = 0)
-tune_grid_ridge <- expand.grid(
-  alpha = 0,  # Ridge
-  lambda = 10^seq(-4, 1, length = 100)  # Range of lambda values
-)
-
-# Train Lasso Logistic Regression with cross-validation
-set.seed(123)
-lasso_model <- train(
-  class ~ ., 
-  data = train_df,
-  method = "glmnet",
-  family = "binomial",
-  trControl = train_control,
-  metric = "F1",
-  tuneGrid = tune_grid_lasso
-)
-
-# View the Lasso model summary
-print(lasso_model)
-
-# Save the Lasso model
-saveRDS(lasso_model, "models/lasso.rds")
-
-# Train Ridge Logistic Regression with cross-validation
-set.seed(123)
-ridge_model <- train(
-  class ~ ., 
-  data = train_df,
-  method = "glmnet",
-  family = "binomial",
-  trControl = train_control,
-  metric = "F1",
-  tuneGrid = tune_grid_ridge
-)
-
-# View the Ridge model summary
-print(ridge_model)
-
-# Save the Ridge model
-saveRDS(ridge_model, "models/ridge.rds")
-# update
+saveRDS(rf_model, "models/rf_1000.rds")

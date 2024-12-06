@@ -6,20 +6,12 @@ library(pROC)
 path <- "data/processed_data/processed_train.csv"
 train <- read.csv(path)
 
-comment_embedding <- readRDS("data/embeddings/train_content_embeddings.rds")
-video_embedding <- readRDS("data/embeddings/train_video_embeddings.rds")
+comment_embedding <- readRDS("train_content_mean_embeddings.rds")
 
-train_df <- train |>
-  select(date_missing, year, month, day, hour, minute, 
-         second, weekday, week, quarter, day_of_year, week_of_year, weekend, 
-         hour_sin, hour_cos, weekday_num, weekday_sin, weekday_cos, month_sin, 
-         month_cos, author_freq, has_url, class)
-
-train_df$comment <- comment_embedding
-train_df$video_name <- video_embedding
+train$content <- comment_embedding
 
 # Convert 'class' to a factor with prefixed labels to make them valid R variable names
-train_df$class <- factor(train_df$class, levels = c(0, 1), labels = c("C0", "C1"))
+train$class <- factor(train$class, levels = c(0, 1), labels = c("C0", "C1"))
 
 # Define custom summary function for F1-score
 f1Summary <- function(data, lev = NULL, model = NULL) {
@@ -55,14 +47,11 @@ train_control <- trainControl(
   savePredictions = "final"
 )
 
-train_df_1 <- train_df |>
-  select(-weekday)
-
 # Use lasso to perform feature selection
 set.seed(123)
 lasso_model <- train(
   class ~ ., 
-  data = train_df_1,
+  data = train,
   method = "glmnet",
   family = "binomial",
   trControl = train_control,
@@ -72,6 +61,10 @@ lasso_model <- train(
     lambda = 10^seq(-4, 1, length = 100)
   )
 )
+
+# save the model
+saveRDS(lasso_model, "models/lasso.rds")
+
 # Extract selected features
 coef_lasso <- coef(lasso_model$finalModel, s = lasso_model$bestTune$lambda)
 selected_features_lasso <- rownames(coef_lasso)[which(coef_lasso != 0)]

@@ -3,8 +3,8 @@ library(lubridate)
 library(stringr)
 library(textclean)
 
-test_path <- "data/raw_data/test.csv"
-test <- read.csv(test_path)
+data_path <- "data/raw_data/test.csv"
+test <- read.csv(data_path)
 
 # Create missingness indicator for testing data
 test <- test |>
@@ -24,7 +24,7 @@ sum(is.na(test$DATE))
 
 # Function to extract date features
 extract_date_features <- function(df) {
-  df <- df %>%
+  df <- df |>
     mutate(
       year = year(DATE),
       month = month(DATE),
@@ -91,9 +91,9 @@ capital_ratio <- function(text) {
   # Total number of alphabetic characters
   total_letters <- length(letters_only)
   
-  # If there are no letters, return NA to avoid division by zero
+  # If there are no letters, return 0
   if (total_letters == 0) {
-    return(NA)
+    return(0)
   }
   
   # Number of uppercase letters
@@ -131,24 +131,31 @@ contains_url <- function(text) {
 test <- test |>
   mutate(has_url = ifelse(contains_url(CONTENT), 1, 0))
 
-# Clean variable video_names
-clean_video_name <- function(video_names) {
-  # Remove multiple question marks
-  video_names <- str_replace_all(video_names, "\\?+", "")
-  
-  # Remove empty parentheses resulting from removal
-  video_names <- str_replace_all(video_names, "\\(\\)", "")
-  
-  # Trim any extra whitespace
-  video_names <- str_squish(video_names)
-  
-  return(video_names)
-}
-
 # Apply to testing data
-test$VIDEO_NAME <- clean_video_name(test$VIDEO_NAME)
+test$VIDEO_NAME <- model.matrix(~ VIDEO_NAME - 1, data = test)
 
 names(test) <- tolower(names(test))
+
+# detect for common words, and add word_count
+test <- test |>
+  mutate(
+    contains_out = as.integer(str_detect(content, "\\bout\\b")),
+    contains_check = as.integer(str_detect(content, "\\bcheck\\b")),
+    contains_please = as.integer(str_detect(content, "\\bplease\\b")),
+    contains_youtube = as.integer(str_detect(content, "\\byoutube\\b")),
+    contains_subscribe = as.integer(str_detect(content, "\\bsubscribe\\b")),
+    contains_video = as.integer(str_detect(content, "\\bvideo\\b")),
+    contains_39 = as.integer(str_detect(content, "\\b39\\b")),
+    contains_channel = as.integer(str_detect(content, "\\bchannel\\b")),
+    contains_money = as.integer(str_detect(content, "\\bmoney\\b")),
+    contains_comment = as.integer(str_detect(content, "\\bcomment\\b")),
+    contains_follow = as.integer(str_detect(content, "\\bfollow\\b")),
+    word_count = str_count(content, "\\S+")
+  )
+
+# -hour, -second, -quarter, -hour_sin, -hour_cos
+test <- test |>
+  select(-comment_id, -author, -date, -weekday)
 
 write.csv(test, "data/processed_data/processed_test.csv")
 

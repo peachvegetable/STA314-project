@@ -40,25 +40,10 @@ with(torch$no_grad(), {  # Disable gradient computation for speed
 # Extract training CLS token embeddings (sentence-level embeddings)
 train_content_embeddings <- train_content_outputs$last_hidden_state[, 0, ]
 train_content_embeddings_matrix <- as.matrix(train_content_embeddings$detach()$numpy())
+train_content_mean_embeddings <- torch$mean(train_content_outputs$last_hidden_state, dim = as.integer(1))
+train_content_mean_embeddings_matrix <- as.matrix(train_content_mean_embeddings$detach()$numpy())
+saveRDS(train_content_mean_embeddings_matrix, "train_content_mean_embeddings.rds")
 saveRDS(train_content_embeddings_matrix, "train_content_embeddings.rds")
-
-# embedd video_name variable in training dataset
-train_video_inputs <- tokenizer(
-  train_video_name,
-  return_tensors = "pt",  # Return PyTorch tensors
-  padding = TRUE,         # Pad all sentences to the same length
-  truncation = TRUE       # Truncate sentences longer than BERT's max length
-)
-
-# Embedding train_inputs
-with(torch$no_grad(), {  # Disable gradient computation for speed
-  train_video_outputs <- model$forward(train_video_inputs$input_ids, attention_mask = train_video_inputs$attention_mask)
-})
-
-# Extract training CLS token embeddings (sentence-level embeddings)
-train_video_embeddings <- train_video_outputs$last_hidden_state[, 0, ]
-train_video_embeddings_matrix <- as.matrix(train_video_embeddings$detach()$numpy())
-saveRDS(train_video_embeddings_matrix, "train_video_embeddings.rds")
 
 # Tokenize the testing content
 test_content_inputs <- tokenizer(
@@ -76,23 +61,8 @@ with(torch$no_grad(), {  # Disable gradient computation for speed
 # Extract testing CLS token embeddings (sentence-level embeddings)
 test_content_embeddings <- test_content_outputs$last_hidden_state[, 0, ]
 test_content_embeddings_matrix <- as.matrix(test_content_embeddings$detach()$numpy())
+test_content_mean_embeddings <- torch$mean(test_content_outputs$last_hidden_state, dim = as.integer(1))
+test_content_mean_embeddings_matrix <- as.matrix(test_content_mean_embeddings$detach()$numpy())
+saveRDS(test_content_mean_embeddings_matrix, "test_content_mean_embeddings.rds")
 saveRDS(test_content_embeddings_matrix, "test_content_embeddings.rds")
-
-# embedd video_name variable in testing dataset
-test_video_inputs <- tokenizer(
-  test_video_name,
-  return_tensors = "pt",  # Return PyTorch tensors
-  padding = TRUE,         # Pad all sentences to the same length
-  truncation = TRUE       # Truncate sentences longer than BERT's max length
-)
-
-# Embedding test_inputs
-with(torch$no_grad(), {  # Disable gradient computation for speed
-  test_video_outputs <- model$forward(test_video_inputs$input_ids, attention_mask = test_video_inputs$attention_mask)
-})
-
-# Extract training CLS token embeddings (sentence-level embeddings)
-test_video_embeddings <- test_video_outputs$last_hidden_state[, 0, ]
-test_video_embeddings_matrix <- as.matrix(test_video_embeddings$detach()$numpy())
-saveRDS(test_video_embeddings_matrix, "test_video_embeddings.rds")
 
