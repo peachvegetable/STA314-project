@@ -1,0 +1,57 @@
+---
+title: "Identifying Spam Comments on YouTube Using Random Forest"
+subtitle: "An Analysis of Comment Features and BERT-Based Embeddings for Spam Detection"
+author: 
+  - Yihang Cai
+date: today
+date-format: long
+format: pdf
+number-sections: true
+toc: true
+---
+
+# Introduction
+
+# Data {#sec-data}
+
+
+## Data processing and interested predictors
+
+
+# Model {#sec-model}
+
+This model pursues two primary goals. The first goal is to determine whether a comment on YouTube is spam based on various properties, such as the date it was published and its author. The second goal is to identify which predictors have the greatest influence on the model's ability to classify comments as spam. For example, after reviewing the training dataset, it was hypothesized that comments containing URL links are more likely to be spam.
+
+To achieve these objectives, we explored several models, including Lasso regression, which performs feature selection by shrinking less important coefficients toward zero; logistic regression, which is computationally efficient and highly interpretable; ridge regression, which is suitable for non-sparse data by penalizing large coefficients without eliminating predictors; random forest, which effectively reduces variance and mitigating the risk of overfitting by using a random subset of the dataset and a random subset of features at each split; and even neural networks, which are highly powerful and modern but the least interpretable due to their "black-box" nature. For neural networks, we opted to use transformers instead of LSTMs, as transformers are widely known to outperform LSTMs across multiple aspects, including training efficiency and prediction accuracy.
+
+For model evaluation, we selected the F1-score as our performance metric. The F1-score is the harmonic mean of precision and recall, providing a balanced assessment of a model’s ability to minimize false positives and false negatives. This makes it particularly suitable for binary classification problems, especially when class imbalance may occur.
+
+(class is balanced)
+
+## Model set-up
+
+
+## Model justification
+
+## Model performance
+
+### Feature engineering
+
+# Results {#sec-results}
+
+## Model overview
+
+## Important predictors
+
+# Discussion {#sec-discussion}
+
+## Model summary and modifications
+
+
+## Key Predictive Variables
+
+## Weaknesses
+
+
+## Next steps
+
