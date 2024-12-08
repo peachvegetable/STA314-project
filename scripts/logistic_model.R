@@ -63,7 +63,7 @@ lasso_model <- train(
 )
 
 # save the model
-saveRDS(lasso_model, "models/lasso.rds")
+print(lasso_model)
 
 # Extract selected features
 coef_lasso <- coef(lasso_model$finalModel, s = lasso_model$bestTune$lambda)
@@ -73,7 +73,7 @@ selected_features_lasso <- selected_features_lasso[selected_features_lasso != "(
 # Train Logistic Regression with cross-validation
 logistic_model <- train(
   class ~ ., 
-  data = train_df,
+  data = train,
   method = "glm",
   family = "binomial",
   trControl = train_control,
